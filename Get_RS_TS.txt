@@ -1,0 +1,35 @@
+// Sentinel-2 image collection
+var s2 = ee.ImageCollection("COPERNICUS/S2");
+
+// Landsat-8 image collection
+var s2 = ee.ImageCollection("LANDSAT/LC8_L1T_TOA");
+
+// Filter by feature attribute
+//var BC1 = TEAK.filter(ee.Filter.eq("value", 'bc1'));
+
+// Quick funciton to add NDVI band to a given Landsat-8 image
+// Sentinel-2 uses bands 8 and 4?
+var addNDVI = function(image) {
+  var ndvi = image.normalizedDifference(['B5', 'B4']).rename('NDVI');
+  return image.addBands(ndvi);
+};
+
+// Map that function across the entire Sentinel-2 image archive
+var withNDVI = s2.map(addNDVI);
+
+// Create a quick chart showing the zonal mean NDVI over time
+var teakNDVI = ui.Chart.image.seriesByRegion(
+    withNDVI, BC1, ee.Reducer.mean(), 'NDVI', 200, 'system:time_start', 'value')
+        .setChartType('ScatterChart')
+        .setOptions({
+          title: 'Sentinel-2 NDVI',
+          vAxis: {title: 'NDVI (unitless)'},
+          lineWidth: 1,
+          pointSize: 4,
+          series: {
+            0: {color: 'FF0000'}, // urban
+            1: {color: '00FF00'}, // forest
+            2: {color: '0000FF'}  // desert
+}});
+print(teakNDVI);
+Map.addLayer(TEAK);
